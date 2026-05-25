@@ -1,0 +1,13 @@
+{
+  "name": "brands-planets-pos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Brands Planets POS frontend with lightweight VPS backend sync",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
