@@ -35,50 +35,26 @@
       align-items: center;
       justify-content: center;
       padding: clamp(18px, 4vw, 42px);
-      background:
-        linear-gradient(135deg, rgba(7, 25, 48, 0.9), rgba(13, 43, 79, 0.72)),
-        url("../assets/login-brand-bg.png") center / cover no-repeat;
+      background: #ffffff;
       position: relative;
-      overflow: hidden;
-      isolation: isolate;
-    }
-    .login-shell::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
-      background-size: 64px 64px;
-      opacity: 0.34;
-      z-index: -1;
-    }
-    .login-shell::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(180deg, rgba(4, 19, 37, 0.24), rgba(4, 19, 37, 0.62)),
-        radial-gradient(circle at 50% 50%, rgba(244, 123, 32, 0.12), transparent 34%);
-      z-index: -1;
+      overflow-y: auto;
     }
     .login-card {
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
-      width: min(460px, 100%);
+      width: min(430px, 100%);
+      margin: auto;
     }
     .login-box {
       position: relative;
       width: 100%;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9));
-      border: 1px solid rgba(255,255,255,0.58);
-      border-radius: 28px;
-      box-shadow: 0 34px 95px rgba(3, 13, 27, 0.34);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 22px 64px rgba(13, 43, 79, 0.12);
       padding: clamp(24px, 4vw, 40px);
-      backdrop-filter: blur(22px);
       animation: loginRise .48s ease both;
       text-align: center;
     }
@@ -100,7 +76,7 @@
       width: 68px;
       height: 68px;
       margin: 0 auto 18px;
-      border-radius: 20px;
+      border-radius: 18px;
       background: var(--orange);
       color: #fff;
       display: grid;
@@ -124,7 +100,7 @@
       width: 100%;
       min-height: 58px;
       margin-top: 10px;
-      box-shadow: 0 16px 32px rgba(244, 123, 32, 0.24);
+      box-shadow: 0 14px 28px rgba(244, 123, 32, 0.2);
       transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
     }
     .login-submit:hover {
