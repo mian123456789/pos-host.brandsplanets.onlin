@@ -164,6 +164,16 @@
       });
       if (changed) localStorage.setItem("bp-pos-state", JSON.stringify(state));
     }
+    function normalizeAttendanceRecords() {
+      let changed = false;
+      state.attendance.forEach(record => {
+        if (!record.id) {
+          record.id = uid("a");
+          changed = true;
+        }
+      });
+      if (changed) localStorage.setItem("bp-pos-state", JSON.stringify(state));
+    }
     function can(section) {
       if (currentUser?.role === "Owner") return true;
       if (attendanceRequired() && section === "attendance") return true;
@@ -199,6 +209,7 @@
     function init() {
       normalizeInventoryCategories();
       normalizeUserPermissions();
+      normalizeAttendanceRecords();
       bindLogin();
       bindGlobal();
       if (currentUser) showApp();
@@ -207,6 +218,7 @@
         if (!loaded) return;
         normalizeInventoryCategories();
         normalizeUserPermissions();
+        normalizeAttendanceRecords();
         if (currentUser && activeSection !== "billing") {
           renderNav();
           render(activeSection);
@@ -291,6 +303,7 @@
       }
       normalizeInventoryCategories();
       normalizeUserPermissions();
+      normalizeAttendanceRecords();
       renderNav();
       render(activeSection);
       toast(cloudOnline ? "System synced with Hostinger backend." : "System refreshed locally. Cloud backend unavailable.");
@@ -898,6 +911,7 @@
       const needsOut = markOutRequired();
       const cashierName = currentUser?.username || "User";
       const currentRecord = todayAttendance(cashierName);
+      const canManage = currentUser?.role === "Owner";
       document.getElementById("attendance").innerHTML = `<div class="card">
         <div class="section-title"><h3>Attendance</h3><div class="user-actions"><button class="btn orange" onclick="markAttendance()">${needsMark ? "Mark Attendance First" : "Mark Attendance"}</button>${needsOut ? `<button class="btn light" onclick="markOutAttendance()">Mark Out</button>` : ""}</div></div>
         <div class="attendance-user-card">
@@ -906,19 +920,91 @@
           <span>${currentRecord ? `In: ${currentRecord.time} | Out: ${currentRecord.outTime || "Pending"}` : "Attendance not marked today"}</span>
         </div>
         ${needsMark ? `<div class="alert">Please mark your attendance first. Billing and other POS sections will unlock after attendance is marked.</div>` : `<p class="muted">Daily tracking for cashiers and monthly export for admin review.</p>`}
-        <div class="table-wrap"><table><thead><tr><th>Date</th><th>User</th><th>Role</th><th>In Time</th><th>Out Time</th><th>Status</th></tr></thead><tbody>
-        ${monthRows.slice().reverse().map(a => `<tr><td>${a.date}</td><td><strong>${a.name || a.username}</strong></td><td>${a.role}</td><td>${a.time}</td><td>${a.outTime || "-"}</td><td><span class="badge ${a.outTime ? "good" : "warn"}">${a.outTime ? "Completed" : a.status}</span></td></tr>`).join("") || `<tr><td colspan="6">No attendance for this month.</td></tr>`}
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>User</th><th>Role</th><th>In Time</th><th>Out Time</th><th>Status</th>${canManage ? "<th>Actions</th>" : ""}</tr></thead><tbody>
+        ${monthRows.slice().reverse().map(a => attendanceRow(a, canManage)).join("") || `<tr><td colspan="${canManage ? 7 : 6}">No attendance for this month.</td></tr>`}
         </tbody></table></div>
         <button class="btn light" style="margin-top:14px" onclick="exportCSV('attendance')">Export Attendance to Excel</button>
       </div>`;
     }
+    function attendanceRow(record, canManage) {
+      return `<tr>
+        <td>${record.date}</td>
+        <td><strong>${record.name || record.username}</strong></td>
+        <td>${record.role}</td>
+        <td>${record.time || "-"}</td>
+        <td>${record.outTime || "-"}</td>
+        <td><span class="badge ${record.outTime || record.status === "Completed" ? "good" : "warn"}">${record.outTime ? "Completed" : record.status}</span></td>
+        ${canManage ? `<td><button class="btn light" onclick="openAttendanceModal('${record.id}')">Edit</button> <button class="btn danger" onclick="deleteAttendance('${record.id}')">Delete</button></td>` : ""}
+      </tr>`;
+    }
     function markAttendance() {
       if (hasAttendanceToday(currentUser.username)) return toast("Attendance already marked today.");
-      state.attendance.push({ date: todayKey(), username: currentUser.username, name: currentUser.username, role: currentUser.role, time: new Date().toLocaleTimeString(), status: "Present" });
+      state.attendance.push({ id: uid("a"), date: todayKey(), username: currentUser.username, name: currentUser.username, role: currentUser.role, time: new Date().toLocaleTimeString(), status: "Present" });
       save();
       renderNav();
       renderAttendance();
       toast("Attendance marked. POS is unlocked.");
+    }
+    function openAttendanceModal(id) {
+      if (!requireOwner()) return;
+      const record = state.attendance.find(a => a.id === id);
+      if (!record) return toast("Attendance record not found.");
+      const cashierUsers = state.users.filter(user => user.role === "Cashier");
+      if (!cashierUsers.some(user => user.username === record.username)) {
+        cashierUsers.push({ username: record.username, role: record.role || "Cashier" });
+      }
+      document.getElementById("modalRoot").innerHTML = `<div class="modal"><div class="modal-panel small-modal">
+        <div class="section-title"><h3>Edit Attendance</h3><button class="btn light icon" onclick="closeModal()">x</button></div>
+        <form id="attendanceEditForm" class="form-grid">
+          <div class="field wide"><label>Cashier</label><select id="attendanceUser">${cashierUsers.map(user => `<option value="${user.username}" ${record.username === user.username ? "selected" : ""}>${user.username}</option>`).join("")}</select></div>
+          ${field("Date", "attendanceDate", record.date, "date")}
+          ${field("In Time", "attendanceIn", record.time || "", "text")}
+          ${field("Out Time", "attendanceOut", record.outTime || "", "text")}
+          <div class="field"><label>Status</label><select id="attendanceStatus">${["Present", "Completed", "Absent", "Late"].map(status => `<option ${record.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></div>
+          <div id="attendanceFormMessage" class="alert hidden wide"></div>
+          <div class="field wide"><button class="btn orange" type="submit">Save Attendance</button></div>
+        </form>
+      </div></div>`;
+      document.getElementById("attendanceEditForm").onsubmit = event => saveAttendanceEdit(event, id);
+    }
+    function saveAttendanceEdit(event, id) {
+      event.preventDefault();
+      if (!requireOwner()) return;
+      const record = state.attendance.find(a => a.id === id);
+      if (!record) return toast("Attendance record not found.");
+      const message = document.getElementById("attendanceFormMessage");
+      const username = document.getElementById("attendanceUser").value.trim();
+      const date = document.getElementById("attendanceDate").value;
+      const inTime = document.getElementById("attendanceIn").value.trim();
+      const outTime = document.getElementById("attendanceOut").value.trim();
+      const status = document.getElementById("attendanceStatus").value;
+      if (!username || !date || !inTime) {
+        message.textContent = "Cashier, date, and in time are required.";
+        message.classList.remove("hidden");
+        return;
+      }
+      const cashier = state.users.find(user => user.username === username);
+      record.username = username;
+      record.name = username;
+      record.role = cashier?.role || "Cashier";
+      record.date = date;
+      record.time = inTime;
+      record.outTime = outTime;
+      record.status = outTime ? "Completed" : status;
+      if (outTime && !record.outAt) record.outAt = new Date().toISOString();
+      if (!outTime) delete record.outAt;
+      save();
+      closeModal();
+      renderAttendance();
+      toast("Attendance updated.");
+    }
+    function deleteAttendance(id) {
+      if (!requireOwner()) return;
+      if (!confirm("Delete this attendance record?")) return;
+      state.attendance = state.attendance.filter(record => record.id !== id);
+      save();
+      renderAttendance();
+      toast("Attendance deleted.");
     }
     function markOutAttendance(skipToast = false) {
       const record = todayAttendance(currentUser?.username);
