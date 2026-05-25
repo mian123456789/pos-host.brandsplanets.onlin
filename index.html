@@ -5,23 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Brands Planets POS</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="css/styles.css?v=attendance-admin">
+  <link rel="stylesheet" href="css/styles.css?v=login-luxury">
 </head>
 <body>
   <div id="loginPage" class="login-shell">
-    <section class="brand-panel">
-      <div>
-        <div class="login-chips">
-          <span>Fast barcode billing</span>
-          <span>Inventory alerts</span>
-          <span>Thermal receipt print</span>
+    <section class="login-stage">
+      <div class="login-topline">
+        <div class="lux-mark">BP</div>
+        <div>
+          <strong>Brands Planets POS</strong>
+          <span>Retail command suite</span>
         </div>
       </div>
+      <div class="login-copy">
+        <span class="login-eyebrow">POS-SYSTEM</span>
+        <h1>Luxury retail control, ready for every sale.</h1>
+      </div>
+      <div class="login-chips">
+        <span>Fast barcode billing</span>
+        <span>Inventory alerts</span>
+        <span>Thermal receipt print</span>
+      </div>
     </section>
-    <section class="login-card">
+    <section class="login-card" aria-label="Login panel">
       <div class="login-box">
-        <h2>Sign in</h2>
-        <p class="muted login-subtitle">POS &bull; Brands Planets</p>
+        <div class="login-box-head">
+          <span>Secure Access</span>
+          <strong>POS-SYSTEM</strong>
+        </div>
         <form id="loginForm">
           <div class="field">
             <label for="username">Username</label>
@@ -34,7 +45,7 @@
               <button class="password-toggle" id="passwordToggle" type="button">Show</button>
             </div>
           </div>
-          <button class="btn orange" style="width:100%" type="submit">Login</button>
+          <button class="btn orange login-submit" type="submit">Login</button>
           <div id="loginMessage" class="alert hidden"></div>
         </form>
       </div>
@@ -83,7 +94,7 @@
   <div id="modalRoot"></div>
   <div id="printArea" class="hidden"></div>
 
-  <script src="js/app.js?v=attendance-admin"></script>
+  <script src="js/app.js?v=login-luxury"></script>
 </body>
 </html>
 
