@@ -648,7 +648,7 @@
             <div class="pos-panel-body">
             <div id="cartList" class="cart-list" style="margin-top:0"></div>
             <div class="payment-fields">
-              <div class="field"><label>Sale Mode</label><select id="saleMode" onchange="saleModeChanged()"><option>In Store</option><option>Online Store</option></select></div>
+              <div class="field"><label>Sale Mode</label><select id="saleMode" onchange="saleModeChanged()"><option>In Store</option><option>Online Store</option><option>Exchange Item</option></select></div>
               <div class="field"><label>Payment Method</label><select id="paymentMethod" onchange="paymentMethodChanged()"><option>Cash</option><option>Bank</option></select></div>
               <div class="field"><label>Bank Reference</label><input id="bankRef" placeholder="Write bank/reference details"></div>
               ${field("Received Amount", "receivedAmount", "", "number")}
@@ -831,6 +831,7 @@
           <div><span>Cashier</span><span>${bill.cashier}</span></div>
           <div><span>Customer</span><span>${bill.customerName}</span></div>
           <div><span>Phone</span><span>${bill.customerPhone}</span></div>
+          <div><span>Mode</span><strong>${bill.saleMode || "In Store"}</strong></div>
         </div>
         <div class="line"></div>
         <table><thead><tr><th>Item</th><th>Qty</th><th>Amt</th></tr></thead><tbody>
@@ -877,9 +878,9 @@
     }
     function renderBillTable() {
       const q = (document.getElementById("billSearch")?.value || "").toLowerCase();
-      const rows = state.bills.filter(b => [b.id,b.customerName,b.customerPhone,b.cashier,b.paymentMethod,b.bankRef].join(" ").toLowerCase().includes(q)).slice().reverse();
+      const rows = state.bills.filter(b => [b.id,b.customerName,b.customerPhone,b.cashier,b.saleMode,b.paymentMethod,b.bankRef].join(" ").toLowerCase().includes(q)).slice().reverse();
       document.getElementById("billTable").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Cashier</th><th>Payment</th><th>Total</th><th>Actions</th></tr></thead><tbody>
-      ${rows.map(b => `<tr><td>${new Date(b.date).toLocaleString()}</td><td>${b.id}</td><td>${b.customerName}<br>${b.customerPhone}</td><td>${b.cashier}</td><td>${b.paymentMethod} ${b.bankRef || ""}</td><td>${money(billTotals(b).total)}</td><td><button class="btn light" onclick="printReceiptById('${b.id}')">Reprint</button> ${currentUser.role === "Owner" ? `<button class="btn danger" onclick="deleteBill('${b.id}')">Delete</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="7">No bills found.</td></tr>`}
+      ${rows.map(b => `<tr><td>${new Date(b.date).toLocaleString()}</td><td>${b.id}</td><td>${b.customerName}<br>${b.customerPhone}</td><td>${b.cashier}</td><td><span class="badge">${b.saleMode || "In Store"}</span><br>${b.paymentMethod} ${b.bankRef || ""}</td><td>${money(billTotals(b).total)}</td><td><button class="btn light" onclick="printReceiptById('${b.id}')">Reprint</button> ${currentUser.role === "Owner" ? `<button class="btn danger" onclick="deleteBill('${b.id}')">Delete</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="7">No bills found.</td></tr>`}
       </tbody></table></div>`;
     }
     function printReceiptById(id) { const b = state.bills.find(x => x.id === id); if (b) printReceipt(b); }
@@ -1275,7 +1276,7 @@
     function exportCSV(type) {
       let rows = [];
       if (type === "inventory") rows = [["Name","Barcode","Category","Price","Stock","Discount","Remarks"], ...state.products.map(p => [p.name,p.barcode,p.category,p.price,p.stock,p.discount,p.remarks])];
-      if (type === "bills") rows = [["Date","Bill","Customer","Phone","Cashier","Payment","Bank","Discount","Total"], ...state.bills.map(b => [b.date,b.id,b.customerName,b.customerPhone,b.cashier,b.paymentMethod,b.bankRef,billTotals(b).discount,billTotals(b).total])];
+      if (type === "bills") rows = [["Date","Bill","Customer","Phone","Cashier","Sale Mode","Payment","Bank","Discount","Total"], ...state.bills.map(b => [b.date,b.id,b.customerName,b.customerPhone,b.cashier,b.saleMode || "In Store",b.paymentMethod,b.bankRef,billTotals(b).discount,billTotals(b).total])];
       if (type === "attendance") rows = [["Date","User","Role","In Time","Out Time","Status"], ...state.attendance.map(a => [a.date,a.username,a.role,a.time,a.outTime || "",a.status])];
       const csv = rows.map(r => r.map(v => `"${String(v ?? "").replaceAll('"','""')}"`).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
